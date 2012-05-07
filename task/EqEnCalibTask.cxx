@@ -1,47 +1,176 @@
-/*
-Eta Prime Analysis for the ALICE Experiment.
-Copyright (C) 2011 Henrik Qvigstad <henrik.qvigstad@cern.ch>
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation
-version 2.1 of the License.
 
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-Lesser General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-*/
+#include "EqEnCalibTask.h"
+#include <TH1F.h>
+#include <TH2F.h>
+#include <AliPHOSCalibData.h>
+#include <AliPHOSGeometry.h>
+#include <AliESDEvent.h>
 
-#include "EECalibTask.h"
+ClassImp(EqEnCalibTask)
 
-#include "TChain.h"
-#include "TLorentzVector.h"
-#include "TList.h"
-#include "TCanvas.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TMath.h"
-#include "AliVEvent.h"
-#include "AliESDEvent.h"
-#include "AliMCEvent.h"
-#include "AliESDVertex.h"
-#include "AliESDCaloCluster.h"
-#include "TRefArray.h"
-#include "TArrayI.h"
-#include "AliMCEvent.h"
-#include "AliESDCaloCells.h"
-//#include "AliPHOSGeometry.h"
-//#include "TGeoManager.h"
+EqEnCalibTask::EqEnCalibTask()
+: AliAnalysisTaskSE("EqEnCalibTask"),
+  fOutput(NULL),
+  fCorrectedIM(NULL),
+  fUnCorrectedIM(NULL),
+  fCalibData(NULL),
+  fPhosGeo(NULL),
+  fCluArray(NULL),
+  fPhosCells(NULL),
+  fRun(0),
+  fMinCells(3),
+  fMinCluE(0.3),
+  fMaxDiffRel(0.05),
+  fMaxDiffAbs(0.1),
+  fMinE(0.),
+  fMaxE(10.),
+  fNBinsE(1000),
+  fMinIM(0.),
+  fMaxIM(0.7),
+  fNBinsIM(700)
+{
 
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <stdexcept>
+}
 
-ClassImp(EECalibTask)
+EqEnCalibTask::EqEnCalibTask(const char* name)
+: AliAnalysisTaskSE(name),
+  fOutput(NULL),
+  fCorrectedIM(NULL),
+  fUnCorrectedIM(NULL),
+  fCalibData(NULL),
+  fPhosGeo(NULL),
+  fCluArray(NULL),
+  fPhosCells(NULL),
+  fRun(0),
+  fMinCells(3),
+  fMinCluE(0.3),
+  fMaxDiffRel(0.05),
+  fMaxDiffAbs(0.1),
+  fMinE(0.),
+  fMaxE(10.),
+  fNBinsE(1000),
+  fMinIM(0.),
+  fMaxIM(0.7),
+  fNBinsIM(700)
+{
+  DefineOutput(1, TList::Class());
+}
 
+
+
+EqEnCalibTask::~EqEnCalibTask()
+{
+  delete fCluArray;
+}
+
+
+void EqEnCalibTask::UserCreateOutputObjects()
+{
+  AliAnalysisTaskSE::UserCreateOutputObjects();
+
+  fOutput = new TList;
+  
+  fCorrectedIM = new TH2F("fCorrectedIM", "Corrected IM", fNBinsE, fMinE, fMaxE, fNBinsIM, fMinIM, fMaxIM);
+  fCorrectedIM->GetXaxis()->SetTitle("Un-corrected Energy");
+  fCorrectedIM->GetYaxis()->SetTitle("Corrected Two-Cluster IM");
+  fOutput->Add(fCorrectedIM);
+
+  fUnCorrectedIM = new TH2F("fUnCorrectedIM", "Un-corrected IM", fNBinsE, fMinE, fMaxE, fNBinsIM, fMinIM, fMaxIM);
+  fUnCorrectedIM->GetXaxis()->SetTitle("Un-corrected Energy");
+  fUnCorrectedIM->GetYaxis()->SetTitle("Un-corrected Two-Cluster IM");
+  fOutput->Add(fUnCorrectedIM);
+
+  fCalibData = new AliPHOSCalibData();
+  fPhosGeo =  AliPHOSGeometry::GetInstance("IHEP");
+
+  PostData(1, fOutput);
+}
+
+
+void EqEnCalibTask::UserExec(Option_t* option)
+{
+  AliAnalysisTaskSE::UserExec(option);
+
+  const AliVEvent* event = InputEvent();
+  const AliESDEvent* esd = dynamic_cast<const AliESDEvent*>(event);
+//   if( ! esd )
+//     Fatal("UserExec", "event not castable to ESD, EqEnCalibTask is only incompatible with ESD");
+  fPhosCells = event->GetPHOSCells();
+  
+  fRun = esd->GetRunNumber();
+  
+  Double_t vtx[3]; //vertex
+  event->GetPrimaryVertex()->GetXYZ(vtx);
+  const TVector3 vertex(vtx);
+
+  if( ! fCluArray )
+    fCluArray = new TRefArray;
+  event->GetPHOSClusters(fCluArray);
+  const Int_t nClusters = fCluArray->GetEntriesFast(); // assumes "no gaps"
+
+  for(int ci1 = 0; ci1 < nClusters; ++ci1) {
+    AliVCluster* cluster1 = PassCluster( dynamic_cast<AliVCluster*> ( fCluArray->At(ci1) ) );
+    if( ! cluster1 )
+      continue;
+    const double unCorrectedEnergy1 = GetUCEnergy(cluster1);
+    const double fraction1 = unCorrectedEnergy1 / cluster1->E();
+    for(int ci2 = ci1+1; ci2 < nClusters; ++ci2) {
+      AliVCluster* cluster2 = PassCluster( dynamic_cast<AliVCluster*> ( fCluArray->At(ci1) ) );
+      if( ! cluster2 )
+	continue;
+      
+      const double unCorrectedEnergy2 = GetUCEnergy(cluster2);
+      const double fraction2 = unCorrectedEnergy2 / cluster2->E();
+      const double absDiff = TMath::Abs(unCorrectedEnergy1 - unCorrectedEnergy2);
+      const double relDiff = absDiff / unCorrectedEnergy1;
+
+      if( absDiff > fMaxDiffAbs )
+	continue;
+      if( relDiff > fMaxDiffRel )
+	continue;
+
+      TLorentzVector p1, p2;
+      cluster1->GetMomentum(p1, vtx);
+      cluster2->GetMomentum(p2, vtx);
+      const TLorentzVector p12 = p1 + p2;
+      const double unCorrectedIM = p12.M() * fraction1 * fraction2;
+      
+      fCorrectedIM->Fill(unCorrectedEnergy1, p12.M());
+      fUnCorrectedIM->Fill(unCorrectedEnergy1, unCorrectedIM );      
+    }
+  }
+
+  PostData(1, fOutput);
+}
+
+void EqEnCalibTask::Terminate(Option_t* )
+{
+
+}
+
+AliVCluster* EqEnCalibTask::PassCluster(AliVCluster* cluster)
+{
+  if( ! cluster )
+    return NULL;
+  if( cluster->GetNCells() < fMinCells )
+    return NULL;
+//   if( cluster->E() < fMinCluE );
+//     return NULL;
+  return cluster;
+}
+
+double EqEnCalibTask::GetUCEnergy(AliVCluster* cluster)
+{
+  const int nCells = cluster->GetNCells();
+  double energySum = 0.;
+  for( int cell = 0; cell < nCells; ++cell) {
+    UShort_t absId = cluster->GetCellAbsId( cell );
+    double fraction = cluster->GetCellAmplitudeFraction( cell );
+    double amplitude = fPhosCells->GetCellAmplitude(absId);
+
+    energySum += fraction * amplitude;
+  }
+  return energySum;
+}

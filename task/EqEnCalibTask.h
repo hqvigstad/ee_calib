@@ -1,24 +1,9 @@
 #ifndef ETATASK_H
 #define ETATASK_H
-/*
-Eta Prime Analysis for the ALICE Experiment.
-Copyright (C) 2011 Henrik Qvigstad <henrik.qvigstad@cern.ch>
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation
-version 2.1 of the License.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-*/
-
+class AliPHOSCalibData;
+class AliPHOSGeometry;
+class TH2F;
 class TList;
 class AliVEvent;
 class TRefArray;
@@ -33,11 +18,12 @@ class TH1;
 
 #include "AliAnalysisTaskSE.h"
 
-class EECalibTask : public AliAnalysisTaskSE
+class EqEnCalibTask : public AliAnalysisTaskSE
 {
  public:
-  EECalibTask(const char* name = "EECalibTask");
-  virtual ~EECalibTask();
+  EqEnCalibTask();
+  EqEnCalibTask(const char* name = "EqEnCalibTask");
+  virtual ~EqEnCalibTask();
 
   virtual void UserCreateOutputObjects();
   virtual Bool_t UserNotify();
@@ -45,12 +31,41 @@ class EECalibTask : public AliAnalysisTaskSE
   virtual void Terminate(Option_t *);
 
  protected:
-  EECalibTask(const EECalibTask&);//Not Implemented
-  EECalibTask& operator=(const EECalibTask& );//Not Implemented
+  EqEnCalibTask(const EqEnCalibTask&);//Not Implemented
+  EqEnCalibTask& operator=(const EqEnCalibTask& );//Not Implemented
 
-  TTree* fOutput;
+  AliVCluster* PassCluster(AliVCluster* cluster);
+  //AliVCluster* PassClusterPair(const AliVCluster* seed, const AliVCluster* other_return);
+  double GetUCEnergy(AliVCluster* cluster);
+  
+  TList* fOutput;
 
-  ClassDef(EECalibTask, 1);
+  TH2F* fCorrectedIM;
+  TH2F* fUnCorrectedIM;
+
+  AliPHOSCalibData* fCalibData;
+  AliPHOSGeometry* fPhosGeo;
+  TRefArray* fCluArray; //!
+  AliVCaloCells* fPhosCells;
+
+  Int_t fRun;
+  
+  // cut parameters
+  Int_t fMinCells;
+  Double_t fMinCluE;
+  Double_t fMaxDiffRel;
+  Double_t fMaxDiffAbs;
+  
+  // range parameters
+  Double_t fMinE;
+  Double_t fMaxE;
+  UInt_t fNBinsE;
+  Double_t fMinIM;
+  Double_t fMaxIM;
+  Double_t fNBinsIM;
+
+  ClassDef(EqEnCalibTask, 1);
 };
 
 #endif
+
