@@ -1,0 +1,22 @@
+
+Jobtag={
+"comment:Merging Task_ee_calib output from alien"
+};
+#Output directory
+OutputDir="$1/";
+
+Packages ={"VO_ALICE@ROOT::v5-30-06-1", "VO_ALICE@APISCONFIG::V1.1x"};
+   
+TTL="71000";
+
+Arguments = "55165888 *ee-calib.output.root merged-ee-calib.output.root  huangm $1/";
+  
+Executable = "/alice/bin/mergerootfile";
+InputFile  = "LF:/alice/macros/mergerootfile.C";
+
+
+
+OutputFile="merged-ee-calib.output.root";
+
+
+# JDL variables

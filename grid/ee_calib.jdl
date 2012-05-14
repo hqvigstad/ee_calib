@@ -1,0 +1,27 @@
+Executable="ee_calib.sh";
+Jobtag ={"EE Calib"};
+
+
+Packages={"VO_ALICE@ROOT::v5-30-06-1","VO_ALICE@AliRoot::v5-03-10-AN","VO_ALICE@APISCONFIG::V1.1x"};
+
+InputDataList="$1.xml";
+InputDataListFormat="xml-single";
+InputDataCollection = {"LF:/alice/cern.ch/user/h/hqvigsta/xmls/LHC11d/pass1/$1.xml,nodownload"};
+
+InputFile = {"LF:/alice/cern.ch/user/h/hqvigsta/code/ee_calib/ee_calib.C",
+             "LF:/alice/cern.ch/user/h/hqvigsta/code/ee_calib/EqEnCalibTask.h",
+             "LF:/alice/cern.ch/user/h/hqvigsta/code/ee_calib/EqEnCalibTask.cxx"};
+
+OutputArchive={"log_archive:stdout,stderr@disk=1",
+               "root_archive:ee-calib.output.root@disk=2"};
+OutputDir = "/alice/cern.ch/user/h/hqvigsta/output/ee_calib/pass1/$1/#alien_counter_03i#";
+
+Validationcommand ="/alice/cern.ch/user/k/kharlov/Analysis/AnalysisTask/validate.sh";
+
+TTL = "24 hours";
+
+Split="se";
+splitarguments="$1.xml";
+#SplitMaxInputFileNumber = "100";
+
+#Email="henrik.qvigstad@cern.ch";
