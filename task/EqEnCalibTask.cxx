@@ -111,6 +111,8 @@ void EqEnCalibTask::UserExec(Option_t* option)
   Double_t vtx[3]; //vertex
   event->GetPrimaryVertex()->GetXYZ(vtx);
   const TVector3 vertex(vtx);
+  if( DebugLevel() >= 3 )
+    Printf("vertex: x:%f y:%f z:%f", vtx[0], vtx[1], vtx[2]);
 
   if( ! fCluArray )
     fCluArray = new TRefArray;
@@ -124,7 +126,7 @@ void EqEnCalibTask::UserExec(Option_t* option)
     const double unCorrectedEnergy1 = GetUCEnergy(cluster1);
     const double fraction1 = unCorrectedEnergy1 / cluster1->E();
     for(int ci2 = ci1+1; ci2 < nClusters; ++ci2) {
-      AliVCluster* cluster2 = PassCluster( dynamic_cast<AliVCluster*> ( fCluArray->At(ci1) ) );
+      AliVCluster* cluster2 = PassCluster( dynamic_cast<AliVCluster*> ( fCluArray->At(ci2) ) );
       if( ! cluster2 )
 	continue;
       
@@ -138,10 +140,12 @@ void EqEnCalibTask::UserExec(Option_t* option)
       if( relDiff > fMaxDiffRel )
 	continue;
 
-      TLorentzVector p1, p2;
+      TLorentzVector p1, p2, p12;
       cluster1->GetMomentum(p1, vtx);
       cluster2->GetMomentum(p2, vtx);
-      const TLorentzVector p12 = p1 + p2;
+      p12 = p1 + p2;
+      if( DebugLevel() >= 5 )
+	Printf("IM: %f", p12.M());
       const double unCorrectedIM = p12.M() * fraction1 * fraction2;
       
       fCorrectedIM->Fill(unCorrectedEnergy1, p12.M());
