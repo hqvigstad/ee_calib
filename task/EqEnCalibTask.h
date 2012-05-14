@@ -22,7 +22,7 @@ class EqEnCalibTask : public AliAnalysisTaskSE
 {
  public:
   EqEnCalibTask();
-  EqEnCalibTask(const char* name = "EqEnCalibTask");
+  EqEnCalibTask(const char* name);
   virtual ~EqEnCalibTask();
 
   virtual void UserCreateOutputObjects();
