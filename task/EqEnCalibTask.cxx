@@ -89,6 +89,13 @@ void EqEnCalibTask::UserCreateOutputObjects()
 }
 
 
+Bool_t EqEnCalibTask::UserNotify()
+{
+  Printf("notify!");
+  return AliAnalysisTaskSE::UserNotify();
+}
+
+
 void EqEnCalibTask::UserExec(Option_t* option)
 {
   AliAnalysisTaskSE::UserExec(option);
