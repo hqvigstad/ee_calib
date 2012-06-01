@@ -1,4 +1,4 @@
-Executable="ee_calib.sh";
+Executable="ee_calib/triggered.sh";
 Jobtag ={"EE Calib"};
 
 
@@ -8,9 +8,9 @@ InputDataList="$1.xml";
 InputDataListFormat="xml-single";
 InputDataCollection = {"LF:/alice/cern.ch/user/h/hqvigsta/xmls/LHC11d/pass1/$1.xml,nodownload"};
 
-InputFile = {"LF:/alice/cern.ch/user/h/hqvigsta/code/ee_calib/ee_calib.C",
-             "LF:/alice/cern.ch/user/h/hqvigsta/code/ee_calib/EqEnCalibTask.h",
-             "LF:/alice/cern.ch/user/h/hqvigsta/code/ee_calib/EqEnCalibTask.cxx"};
+InputFile = {"LF:/alice/cern.ch/user/h/hqvigsta/code/ee_calib/triggered/ee_calib/triggered.C",
+             "LF:/alice/cern.ch/user/h/hqvigsta/code/ee_calib/triggered/EqEnCalibTask.h",
+             "LF:/alice/cern.ch/user/h/hqvigsta/code/ee_calib/triggered/EqEnCalibTask.cxx"};
 
 OutputArchive={"log_archive:stdout,stderr@disk=1",
                "root_archive:ee-calib.output.root@disk=2"};
