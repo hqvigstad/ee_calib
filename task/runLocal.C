@@ -16,6 +16,7 @@ void runLocal() {
   gSystem->Load("libANALYSIS.so");
   gSystem->Load("libANALYSISalice.so");
   gROOT->ProcessLine(".include $ALICE_ROOT/include");
+  gROOT->ProcessLine(".include $ALICE_ROOT/PHOS");
 
   //___________Compile analysis task using AClic____________//
   gROOT->LoadMacro("EqEnCalibTask.cxx+g");

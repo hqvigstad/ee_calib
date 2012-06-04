@@ -7,6 +7,7 @@
 #include <AliPHOSCalibData.h>
 #include <AliPHOSGeometry.h>
 #include <AliESDEvent.h>
+#include <AliPHOSReconstructor.h>
 
 ClassImp(EqEnCalibTask)
 
@@ -15,6 +16,8 @@ EqEnCalibTask::EqEnCalibTask()
   fOutput(NULL),
   fCorrectedIM(NULL),
   fUnCorrectedIM(NULL),
+  fUnCorCor(NULL),
+  fCorUnCorCor(NULL),
   fCalibData(NULL),
   fPhosGeo(NULL),
   fCluArray(NULL),
@@ -39,6 +42,8 @@ EqEnCalibTask::EqEnCalibTask(const char* name)
   fOutput(NULL),
   fCorrectedIM(NULL),
   fUnCorrectedIM(NULL),
+  fUnCorCor(NULL),
+  fCorUnCorCor(NULL),
   fCalibData(NULL),
   fPhosGeo(NULL),
   fCluArray(NULL),
@@ -81,6 +86,15 @@ void EqEnCalibTask::UserCreateOutputObjects()
   fUnCorrectedIM->GetXaxis()->SetTitle("Un-corrected Energy");
   fUnCorrectedIM->GetYaxis()->SetTitle("Un-corrected Two-Cluster IM");
   fOutput->Add(fUnCorrectedIM);
+
+  fUnCorCor = new TH1F("fUnCorCor", "Un-Corrected over Corrected", 1000, 0, 2);
+  fUnCorCor->GetXaxis()->SetTitle("E^{a} / E^{lc}");
+  fOutput->Add(fUnCorCor);
+
+  fCorUnCorCor = new TH1F("fCorUnCorCor", "Un-Corrected over Corrected", 1000, 0, 2);
+  fCorUnCorCor->GetXaxis()->SetTitle("C^l(E^a / E^{lc}");
+  fOutput->Add(fCorUnCorCor);
+  
 
   fCalibData = new AliPHOSCalibData();
   fPhosGeo =  AliPHOSGeometry::GetInstance("IHEP");
@@ -125,6 +139,10 @@ void EqEnCalibTask::UserExec(Option_t* option)
       continue;
     const double unCorrectedEnergy1 = GetUCEnergy(cluster1);
     const double fraction1 = unCorrectedEnergy1 / cluster1->E();
+    fUnCorCor->Fill( fraction1 );
+    double corUnCor1 = AliPHOSReconstructor::CorrectNonlinearity(unCorrectedEnergy1);
+    fCorUnCorCor->Fill( corUnCor1 / cluster1->E() );
+    
     for(int ci2 = ci1+1; ci2 < nClusters; ++ci2) {
       AliVCluster* cluster2 = PassCluster( dynamic_cast<AliVCluster*> ( fCluArray->At(ci2) ) );
       if( ! cluster2 )

@@ -42,6 +42,8 @@ class EqEnCalibTask : public AliAnalysisTaskSE
 
   TH2F* fCorrectedIM;
   TH2F* fUnCorrectedIM;
+  TH1F* fUnCorCor;
+  TH1F* fCorUnCorCor;
 
   AliPHOSCalibData* fCalibData;
   AliPHOSGeometry* fPhosGeo;
