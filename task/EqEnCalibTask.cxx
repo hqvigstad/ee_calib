@@ -14,10 +14,10 @@ ClassImp(EqEnCalibTask)
 EqEnCalibTask::EqEnCalibTask()
 : AliAnalysisTaskSE("EqEnCalibTask"),
   fOutput(NULL),
-  fCorrectedIM(NULL),
-  fUnCorrectedIM(NULL),
-  fUnCorCor(NULL),
-  fCorUnCorCor(NULL),
+  fEnIM(NULL),
+  fAmpIM(NULL),
+  fAmpEn(NULL),
+  fCorAmpEn(NULL),
   fCalibData(NULL),
   fPhosGeo(NULL),
   fCluArray(NULL),
@@ -40,10 +40,10 @@ EqEnCalibTask::EqEnCalibTask()
 EqEnCalibTask::EqEnCalibTask(const char* name)
 : AliAnalysisTaskSE(name),
   fOutput(NULL),
-  fCorrectedIM(NULL),
-  fUnCorrectedIM(NULL),
-  fUnCorCor(NULL),
-  fCorUnCorCor(NULL),
+  fEnIM(NULL),
+  fAmpIM(NULL),
+  fAmpEn(NULL),
+  fCorAmpEn(NULL),
   fCalibData(NULL),
   fPhosGeo(NULL),
   fCluArray(NULL),
@@ -76,24 +76,25 @@ void EqEnCalibTask::UserCreateOutputObjects()
   AliAnalysisTaskSE::UserCreateOutputObjects();
 
   fOutput = new TList;
+  fOutput->SetOwner();
   
-  fCorrectedIM = new TH2F("fCorrectedIM", "Corrected IM", fNBinsE, fMinE, fMaxE, fNBinsIM, fMinIM, fMaxIM);
-  fCorrectedIM->GetXaxis()->SetTitle("Un-corrected Energy");
-  fCorrectedIM->GetYaxis()->SetTitle("Corrected Two-Cluster IM");
-  fOutput->Add(fCorrectedIM);
+  fEnIM = new TH2F("fEnIM", "Amplitude IM", fNBinsE, fMinE, fMaxE, fNBinsIM, fMinIM, fMaxIM);
+  fEnIM->GetXaxis()->SetTitle("A (Un-corrected Energy) [GeV]");
+  fEnIM->GetYaxis()->SetTitle("M *A_i/E_i *A_j/E_j [GeV/c^2] (Un-Corrected IM)");
+  fOutput->Add(fEnIM);
 
-  fUnCorrectedIM = new TH2F("fUnCorrectedIM", "Un-corrected IM", fNBinsE, fMinE, fMaxE, fNBinsIM, fMinIM, fMaxIM);
-  fUnCorrectedIM->GetXaxis()->SetTitle("Un-corrected Energy");
-  fUnCorrectedIM->GetYaxis()->SetTitle("Un-corrected Two-Cluster IM");
-  fOutput->Add(fUnCorrectedIM);
+  fAmpIM = new TH2F("fAmpIM", "Un-corrected IM", fNBinsE, fMinE, fMaxE, fNBinsIM, fMinIM, fMaxIM);
+  fAmpIM->GetXaxis()->SetTitle("A [GeV] (Un-corrected Energy)");
+  fAmpIM->GetYaxis()->SetTitle("M [GeV/c^2]");
+  fOutput->Add(fAmpIM);
 
-  fUnCorCor = new TH1F("fUnCorCor", "Un-Corrected over Corrected", 1000, 0, 2);
-  fUnCorCor->GetXaxis()->SetTitle("E^{a} / E^{lc}");
-  fOutput->Add(fUnCorCor);
+  fAmpEn = new TH1F("fAmpEn", "Amplitude over Energy", 1000, 0, 2);
+  fAmpEn->GetXaxis()->SetTitle("A/E");
+  fOutput->Add(fAmpEn);
 
-  fCorUnCorCor = new TH1F("fCorUnCorCor", "Un-Corrected over Corrected", 1000, 0, 2);
-  fCorUnCorCor->GetXaxis()->SetTitle("C^l(E^a / E^{lc}");
-  fOutput->Add(fCorUnCorCor);
+  fCorAmpEn = new TH1F("fCorAmpEn", "Corrected Un-Corrected over Corrected", 1000, 0, 2);
+  fCorAmpEn->GetXaxis()->SetTitle("C^{(sim)}(A)/E");
+  fOutput->Add(fCorAmpEn);
   
 
   fCalibData = new AliPHOSCalibData();
@@ -139,9 +140,9 @@ void EqEnCalibTask::UserExec(Option_t* option)
       continue;
     const double unCorrectedEnergy1 = GetUCEnergy(cluster1);
     const double fraction1 = unCorrectedEnergy1 / cluster1->E();
-    fUnCorCor->Fill( fraction1 );
+    fAmpEn->Fill( fraction1 );
     double corUnCor1 = AliPHOSReconstructor::CorrectNonlinearity(unCorrectedEnergy1);
-    fCorUnCorCor->Fill( corUnCor1 / cluster1->E() );
+    fCorAmpEn->Fill( corUnCor1 / cluster1->E() );
     
     for(int ci2 = ci1+1; ci2 < nClusters; ++ci2) {
       AliVCluster* cluster2 = PassCluster( dynamic_cast<AliVCluster*> ( fCluArray->At(ci2) ) );
@@ -166,8 +167,8 @@ void EqEnCalibTask::UserExec(Option_t* option)
 	Printf("IM: %f", p12.M());
       const double unCorrectedIM = p12.M() * fraction1 * fraction2;
       
-      fCorrectedIM->Fill(unCorrectedEnergy1, p12.M());
-      fUnCorrectedIM->Fill(unCorrectedEnergy1, unCorrectedIM );      
+      fEnIM->Fill(unCorrectedEnergy1, p12.M());
+      fAmpIM->Fill(unCorrectedEnergy1, unCorrectedIM );
     }
   }
 

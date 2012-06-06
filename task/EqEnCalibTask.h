@@ -40,10 +40,10 @@ class EqEnCalibTask : public AliAnalysisTaskSE
   
   TList* fOutput;
 
-  TH2F* fCorrectedIM;
-  TH2F* fUnCorrectedIM;
-  TH1F* fUnCorCor;
-  TH1F* fCorUnCorCor;
+  TH2F* fEnIM;
+  TH2F* fAmpIM;
+  TH1F* fAmpEn;
+  TH1F* fCorAmpEn;
 
   AliPHOSCalibData* fCalibData;
   AliPHOSGeometry* fPhosGeo;
