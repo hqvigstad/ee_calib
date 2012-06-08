@@ -19,3 +19,4 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic -Woverloa
 
 
 add_subdirectory(task)
+add_subdirectory(calibrator)
