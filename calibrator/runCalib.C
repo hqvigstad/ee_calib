@@ -23,6 +23,7 @@ void runCalib()
   
   //___________Compile analysis task using AClic____________//
   gROOT->LoadMacro("CorrFcn.cxx+g");
+  gROOT->LoadMacro("Henrik2010.cxx+g");
   gROOT->LoadMacro("calib.C+g");
   
   calib("../grid/merged-ee-calib.output.root");

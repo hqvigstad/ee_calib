@@ -8,7 +8,11 @@
 #ifndef CORRFCN_H
 #define CORRFCN_H
 
+#include "TF1.h"
+#include "TGraphErrors.h"
+
 #include "Minuit2/FCNBase.h"
+#include "Minuit2/MnUserParameters.h"
 
 #include <vector>
 
@@ -42,14 +46,20 @@ public:
   CorrFcn(const CorrFcn& other);
   virtual ~CorrFcn() {;}
 
-  virtual inline double Up() const {return errorDef;}
-  virtual double operator () (const std::vector<double>& par) const;
+  double operator () (const std::vector<double>& par) const;
+  double Up() const {return errorDef;}
+  void SetErrorDef(double def) {errorDef = def;}
 
-  void setErrorDef(double def) {errorDef = def;}
-private:
+  virtual ROOT::Minuit2::MnUserParameters GetInitParameters();
   virtual double f(const double& A, const std::vector<double>& par) const;
-  virtual double I(const double& A) const {return 0.1349766;} // pi0 mass [PDG 2010]
+
+  double I(const double& A) const {return 0.1349766 +(A-A);} // pi0 mass [PDG 2010]
+  virtual TF1 CreateF(const std::vector<double>& par) const;
+  TGraphErrors CreateIMGraph(const std::vector<double>& par) const;
+  int GetNPoints() { return peak.size(); }
+    
   
+private:
   std::vector<double> peak; // Position of IM peak
   std::vector<double> peakErr; // Error of Position of IM peak
   std::vector<double> amp; // Amplitude

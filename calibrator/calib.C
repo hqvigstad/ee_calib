@@ -4,6 +4,7 @@
 #include <TAxis.h>
 #include "TMath.h"
 #include <TH1F.h>
+#include "TPaveText.h"
 #include "TF1.h"
 #include "TFitResult.h"
 #include "TCanvas.h"
@@ -12,18 +13,22 @@
 #include "Minuit2/FunctionMinimum.h"
 #include "Minuit2/VariableMetricMinimizer.h"
 #include "Minuit2/MnPrint.h"
+#include "Minuit2/MnMigrad.h"
 using namespace ROOT::Minuit2;
 
 
 
 #include "CorrFcn.h"
+#include "Henrik2010.h"
 
 #include <iostream>
 #include <vector>
 
 using namespace std;
 
+
 CorrFcn createCorrFcn(TH2F* hist);
+
 
 void calib(const TString& fileName ="ee-calib.output.root",
 	   const TString& listName = "outList")
@@ -42,18 +47,37 @@ void calib(const TString& fileName ="ee-calib.output.root",
   }
   
 
-  CorrFcn fnc = createCorrFcn(unCorrectedIM);
-
-
-  double ipars[7]={1.051, 2.54e-003, -1.737e-002, 5.69e-002, 3.3e-001, 1.42e-001, 1.50e-002};
-  vector<double> iparameters = vector<double>(ipars, ipars+7);
-  double ipar_errs[7]={0.1051, 2.54e-004,-1.737e-003,5.69e-003,3.3e-002,1.42e-002,1.50e-003};
-  vector<double> iparameter_errs = vector<double>(ipar_errs, ipar_errs+7);
-
-  VariableMetricMinimizer minimizer;
-  FunctionMinimum min = minimizer.Minimize(fnc, iparameters, iparameter_errs, 1, 10000 );
+  Henrik2010 fnc = createCorrFcn(unCorrectedIM);
+  MnUserParameters iParams = fnc.GetInitParameters();
+  MnMigrad migrad(fnc, iParams);
+  
+  FunctionMinimum min = migrad(10000);
   cout << min << endl;
   
+  const vector<double>& minParams = min.UserParameters().Params();
+  TF1 newFunc = fnc.CreateF(minParams);
+  TGraphErrors newCorrGraph = fnc.CreateIMGraph(minParams);
+
+  new TCanvas;
+  newFunc.SetNpx(10000);
+  newFunc.DrawCopy("");
+  TF1 initFunc = fnc.CreateF(iParams.Params());
+  initFunc.SetLineColor(kRed);
+  initFunc.DrawCopy("same");
+  
+  new TCanvas;
+  unCorrectedIM->DrawCopy("colz");
+  newCorrGraph.DrawClone("sampP");
+  TF1 I = TF1("I", "0.1349766", 0, 5);
+  I.DrawCopy("same");
+
+  TPaveText *pt = new TPaveText(.78, .85, .98, .98, "ndc");
+  char txt[256];
+  sprintf(txt, "#frac{#chi^{2}}{ndf} = #frac{%f}{%d}", min.Fval(), fnc.GetNPoints() - min.Parameters().Vec().size());
+  pt->AddText(txt);
+  pt->Draw();
+
+    
 }
 
 CorrFcn createCorrFcn(TH2F* hist)
@@ -141,6 +165,9 @@ CorrFcn createCorrFcn(TH2F* hist)
   //TH2F* graphHist = graphHist
   hist->DrawCopy("colz");
   graph->Draw("sameP");
+  TF1 I = TF1("I", "0.1349766", 0, 5);
+  I.DrawCopy("same");
+
 
 
   CorrFcn fnc = CorrFcn(nSuccess, means, energies, mean_errors, energies_width );
