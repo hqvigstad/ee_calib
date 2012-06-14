@@ -92,6 +92,13 @@ void EqEnCalibTask::UserCreateOutputObjects()
   fAmpEn->GetXaxis()->SetTitle("A/E");
   fOutput->Add(fAmpEn);
 
+  fEnAmp = new TH2F("fEnAmp", "MC Energy over Amplitude", fNBinsE, fMinE, fMaxE, 1000, 0, 2);
+  fEnAmp->GetXaxis()->SetTitle("Amplitude");
+  fEnAmp->GetYaxis()->SetTitle("'MC E'/A");
+
+  fGammaPID = new TH1F("fGammaPID", "Photon/Gamma PID", 1001, 0, 1.001);
+  fGammaPID->GetXaxis()->SetTitle("kGamma PID");
+
   fCorAmpEn = new TH1F("fCorAmpEn", "Corrected Un-Corrected over Corrected", 1000, 0, 2);
   fCorAmpEn->GetXaxis()->SetTitle("C^{(sim)}(A)/E");
   fOutput->Add(fCorAmpEn);
@@ -116,12 +123,13 @@ void EqEnCalibTask::UserExec(Option_t* option)
   AliAnalysisTaskSE::UserExec(option);
 
   const AliVEvent* event = InputEvent();
+  const AliMCEvent* mcEvent = MCEvent();
   const AliESDEvent* esd = dynamic_cast<const AliESDEvent*>(event);
 //   if( ! esd )
 //     Fatal("UserExec", "event not castable to ESD, EqEnCalibTask is only incompatible with ESD");
-  fPhosCells = event->GetPHOSCells();
   
-  fRun = esd->GetRunNumber();
+  fRun = event->GetRunNumber();
+  fPhosCells = event->GetPHOSCells();
   
   Double_t vtx[3]; //vertex
   event->GetPrimaryVertex()->GetXYZ(vtx);

@@ -43,6 +43,8 @@ class EqEnCalibTask : public AliAnalysisTaskSE
   TH2F* fEnIM;
   TH2F* fAmpIM;
   TH1F* fAmpEn;
+  TH2F* fEnAmp;
+  TH1F* fGammaPID;
   TH1F* fCorAmpEn;
 
   AliPHOSCalibData* fCalibData;
