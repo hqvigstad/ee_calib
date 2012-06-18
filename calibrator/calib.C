@@ -88,6 +88,11 @@ CorrFcn createCorrFcn(TH2F* hist)
   int minEntries = 100;
   double maxMeanError = 0.1;
 
+  TCanvas* fitPlotsCanv =0;
+  const int nPads = 4*3;
+  int currentPad = 0;
+
+
   TAxis* xAxis = hist->GetXaxis();
   Int_t nBins = xAxis->GetNbins();
   double* lowEdges = new Double_t[nBins+2];
@@ -102,7 +107,7 @@ CorrFcn createCorrFcn(TH2F* hist)
   // Function to be fitted:
   TF1* fitFunc = new TF1("func", "gaus(0)+pol1(3)", 0.07, 0.2);
   //TF1* func = new TF1("func", "gaus(0)", 0.1, 0.15);
-  while ( upE < xAxis->GetBinUpEdge(nBins) )
+  while ( upE < xAxis->GetBinUpEdge(nBins) ) //loop over projection bins
   {
     // Project range of E of 2d Histogram to 1D.
     int lowBin = TMath::BinarySearch<Double_t>(nBins, lowEdges, lowE) +1;
@@ -110,6 +115,7 @@ CorrFcn createCorrFcn(TH2F* hist)
     lowE = xAxis->GetBinLowEdge(lowBin);
     upE = xAxis->GetBinUpEdge(upBin);
 
+    // Do pojection and do basic verification
     Printf("projecting from: %f (bin %d) to: %f (bin %d)", lowE, lowBin, upE, upBin);
     TH1D* projY = hist->ProjectionY("projY", lowBin, upBin, "e");
     int nEntries = projY->GetEntries();
@@ -119,30 +125,42 @@ CorrFcn createCorrFcn(TH2F* hist)
       upE += binWidthIncrement;
       continue;
     }
+    // set name/title
+    char name[256];
+    sprintf(name, "proj_%1.2f_%1.2f", lowE, upE);
+    projY->SetName(name);
+    char title[256];
+    sprintf(title, "Un-Corrected IM, %1.1f < p_T < %1.1f", lowE, upE );
+    projY->SetTitle(title);
+    projY->GetXaxis()->SetRangeUser(0., 0.3);
 
+    // Prepare canvas
+    if( !fitPlotsCanv || nPads == currentPad ){
+      fitPlotsCanv = new TCanvas;
+      fitPlotsCanv->DivideSquare(nPads);
+      currentPad = 0;
+    }
+    fitPlotsCanv->cd(++currentPad);
+
+    // Do Fit, automatically  drawn on canvas:
     fitFunc->SetParameters(projY->GetMaximum(), 0.12, 0.003, 0., 0.);
-
-    // Do Fit:
-    TFitResultPtr r = projY->Fit(fitFunc, "RLS0+", "");
+    TFitResultPtr r = projY->Fit(fitFunc, "RLS", "");
 
     // Test Fit:
     if( (int) r)
     { // if error
-      Printf("fit completed with error, %d", (int) r);
-      // Draw projection and fit.
-      new TCanvas;
-      char name[256];
-      sprintf(name, "proj_%1.2f_%1.2f", lowE, upE);
-      projY->SetName(name);
-      char title[256];
-      sprintf(title, "Un-Corrected IM, %1.1f < p_T < %1.1f", lowE, upE );
-      projY->SetTitle(title);
-      projY->DrawCopy();
-      fitFunc->DrawCopy("same");
-
+      TPaveText *pt = new TPaveText(.6, .4, .8, .6, "ndc");
+      pt->SetTextColor(kRed);
+      pt->AddText("Rejected");
+      pt->AddText("Fit Error"); 
+      pt->Draw();
     }
     else if ( r->ParError(1) > maxMeanError ) {
-      Printf("fit completed with large error in the mean, %f", r->ParError(1) );
+      TPaveText *pt = new TPaveText(.6, .4, .8, .6, "ndc");
+      pt->SetTextColor(kRed);
+      pt->AddText("Rejected");
+      pt->AddText("Fit Error");
+      pt->Draw();
     }
     else //, success
     {
