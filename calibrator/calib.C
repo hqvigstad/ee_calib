@@ -156,10 +156,10 @@ CorrFcn createCorrFcn(TH2F* hist)
       pt->Draw();
     }
     else if ( r->ParError(1) > maxMeanError ) {
-      TPaveText *pt = new TPaveText(.6, .4, .8, .6, "ndc");
+      TPaveText *pt = new TPaveText(.6, .4, .9, .6, "ndc");
       pt->SetTextColor(kRed);
       pt->AddText("Rejected");
-      pt->AddText("Fit Error");
+      pt->AddText("Large Error of Mean");
       pt->Draw();
     }
     else //, success
