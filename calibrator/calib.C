@@ -67,6 +67,8 @@ void calib(const TString& fileName ="ee-calib.output.root",
   
   new TCanvas;
   unCorrectedIM->DrawCopy("colz");
+  newCorrGraph.GetYaxis()->SetTitle("M [GeV]");
+  newCorrGraph.GetXaxis()->SetTitle("A [GeV]");
   newCorrGraph.DrawClone("sampP");
   TF1 I = TF1("I", "0.1349766", 0, 5);
   I.DrawCopy("same");
