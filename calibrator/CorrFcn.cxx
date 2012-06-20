@@ -59,9 +59,18 @@ double CorrFcn::f(const double& A, const std::vector<double>& p) const
   return p[0]+p[1]*A +p[2]*A*A;
 }
 
-TF1 CorrFcn::CreateF(const std::vector< double >& par) const
+TF1 CorrFcn::Createf(const std::vector< double >& par) const
 {
   TF1 func = TF1("f", "[0]+[1]*x + [2]*x*x", 0, 10) ;
+  func.SetParameters(&par[0]);
+  func.GetXaxis()->SetTitle("A [APD]");
+  func.GetYaxis()->SetTitle("f=f(A;p)");
+  return func;
+}
+
+TF1 CorrFcn::CreateF(const std::vector< double >& par) const
+{
+  TF1 func = TF1("F", "x*([0]+[1]*x + [2]*x*x)", 0, 10) ;
   func.SetParameters(&par[0]);
   func.GetXaxis()->SetTitle("A [APD]");
   func.GetYaxis()->SetTitle("E [GeV]");

@@ -54,7 +54,8 @@ public:
   virtual double f(const double& A, const std::vector<double>& par) const;
 
   double I(const double& A) const {return 0.1349766 +(A-A);} // pi0 mass [PDG 2010]
-  virtual TF1 CreateF(const std::vector<double>& par) const;
+  virtual TF1 Createf(const std::vector<double>& par) const;
+  virtual TF1 CreateF(const std::vector< double >& par) const;
   TGraphErrors CreateIMGraph(const std::vector<double>& par) const;
   int GetNPoints() { return peak.size(); }
     

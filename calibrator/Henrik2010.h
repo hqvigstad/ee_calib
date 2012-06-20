@@ -20,6 +20,7 @@ public:
 
     double f(const double& A, const std::vector<double>& p) const;
     ROOT::Minuit2::MnUserParameters GetInitParameters();
+    TF1 Createf(const std::vector< double >& par) const;
     TF1 CreateF(const std::vector< double >& par) const;
 };
 

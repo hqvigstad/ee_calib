@@ -45,9 +45,18 @@ MnUserParameters Henrik2010::GetInitParameters()
   return rpar;
 }
 
-TF1 Henrik2010::CreateF(const std::vector< double >& par) const
+TF1 Henrik2010::Createf(const std::vector< double >& par) const
 {
   TF1 func = TF1("f", "([0]+[1]*exp(-x*[2]))*(1.+[3]*exp(-x*[4]))*(1.+[6]/(x*x+[5]))", 0, 100) ;
+  func.SetParameters(&par[0]);
+  func.GetXaxis()->SetTitle("A [APD]");
+  func.GetYaxis()->SetTitle("f=f(A;p)");
+  return func;
+}
+
+TF1 Henrik2010::CreateF(const std::vector< double >& par) const
+{
+  TF1 func = TF1("F", "x*(([0]+[1]*exp(-x*[2]))*(1.+[3]*exp(-x*[4]))*(1.+[6]/(x*x+[5])))", 0, 100) ;
   func.SetParameters(&par[0]);
   func.GetXaxis()->SetTitle("A [APD]");
   func.GetYaxis()->SetTitle("E [GeV]");

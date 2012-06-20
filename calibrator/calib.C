@@ -55,13 +55,13 @@ void calib(const TString& fileName ="ee-calib.output.root",
   cout << min << endl;
   
   const vector<double>& minParams = min.UserParameters().Params();
-  TF1 newFunc = fnc.CreateF(minParams);
+  TF1 newFunc = fnc.Createf(minParams);
   TGraphErrors newCorrGraph = fnc.CreateIMGraph(minParams);
 
   new TCanvas;
   newFunc.SetNpx(10000);
   newFunc.DrawCopy("");
-  TF1 initFunc = fnc.CreateF(iParams.Params());
+  TF1 initFunc = fnc.Createf(iParams.Params());
   initFunc.SetLineColor(kRed);
   initFunc.DrawCopy("same");
   
