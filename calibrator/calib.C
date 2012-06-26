@@ -69,6 +69,7 @@ void calib(const TString& fileName ="ee-calib.output.root",
   unCorrectedIM->DrawCopy("colz");
   newCorrGraph.GetYaxis()->SetTitle("M [GeV]");
   newCorrGraph.GetXaxis()->SetTitle("A [GeV]");
+  newCorrGraph.SetTitle("Position of Peak scaled by New Parameterisation");
   newCorrGraph.DrawClone("sampP");
   TF1 I = TF1("I", "0.1349766", 0, 5);
   I.DrawCopy("same");
@@ -91,7 +92,7 @@ CorrFcn createCorrFcn(TH2F* hist)
   double maxMeanError = 0.1;
 
   TCanvas* fitPlotsCanv =0;
-  const int nPads = 4*3;
+  const int nPads = 4*4;
   int currentPad = 0;
 
 
@@ -182,7 +183,11 @@ CorrFcn createCorrFcn(TH2F* hist)
 
   new TCanvas;
   TGraphErrors* graph = new TGraphErrors(nSuccess, energies, means, energies_width, mean_errors);
+  graph->SetMarkerStyle(kDot);
   //TH2F* graphHist = graphHist
+  hist->GetXaxis()->SetTitle("Amplitude [GeV]");
+  hist->Rebin2D(25,4);
+  hist->GetYaxis()->SetRangeUser(0., 0.15);
   hist->DrawCopy("colz");
   graph->Draw("sameP");
   TF1 I = TF1("I", "0.1349766", 0, 5);
